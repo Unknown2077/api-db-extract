@@ -1,16 +1,12 @@
-class ExtractError(Exception):
-    """Base for source extraction errors."""
-
-
-class ConnectorError(ExtractError):
+class ConnectorError(Exception):
     """Network or protocol failure on source API."""
 
 
-class ConfigError(ExtractError):
+class ConfigError(Exception):
     """Missing or invalid environment configuration."""
 
 
-class MapperError(ExtractError):
+class MapperError(Exception):
     """Raw record cannot be mapped to canonical format."""
 
     def __init__(self, field: str, reason: str) -> None:
@@ -18,11 +14,7 @@ class MapperError(ExtractError):
         super().__init__(f"Mapping failed on '{field}': {reason}")
 
 
-class LoadError(Exception):
-    """Base for target load errors."""
-
-
-class TargetAPIError(LoadError):
+class TargetAPIError(Exception):
     """Non-retryable 4xx from target API."""
 
     def __init__(self, status_code: int, message: str) -> None:

@@ -1,40 +1,63 @@
-"""Entry point."""
-import typer
-
-from src.cli.args import DryRunArg, ModeArg, SourceArg, app
+"""Entry point for simple ETL pipeline."""
 from src.config import load_config
+from src.connectors import inaproc, worldbank
 from src.errors import ConfigError
 from src.logger import get_logger
-from src.orchestrator import run_source
+from src.mappers.inaproc_mapper import map_inaproc
+from src.mappers.worldbank_mapper import map_worldbank
+from src.target.payload_builder import build_payload
+from src.target.target_api_client import TargetAPIClient
 
 log = get_logger(__name__)
 
-_VALID_SOURCES = {"inaproc", "worldbank"}
-_VALID_MODES = {"incremental", "full-refresh"}
 
-
-@app.command()
-def main(
-    source: SourceArg = "all",
-    mode: ModeArg = "incremental",
-    dry_run: DryRunArg = False,
-) -> None:
-    if mode not in _VALID_MODES:
-        raise typer.BadParameter(f"--mode must be one of: {', '.join(_VALID_MODES)}")
-
-    sources = _VALID_SOURCES if source == "all" else {source}
-    if not sources.issubset(_VALID_SOURCES):
-        raise typer.BadParameter(f"--source must be one of: all, {', '.join(_VALID_SOURCES)}")
-
+def main() -> None:
     try:
         config = load_config()
     except ConfigError as exc:
         log.error("Configuration error: %s", exc)
-        raise typer.Exit(code=1) from exc
+        return
 
-    for src in sorted(sources):
-        run_source(src, config, mode, dry_run)
+    # Inaproc
+    try:
+        log.info("Starting Inaproc extraction...")
+        raw_inaproc = inaproc.fetch_all(config)
+        mapped_inaproc = []
+        for raw in raw_inaproc:
+            try:
+                mapped_inaproc.append(map_inaproc(raw))
+            except Exception as e:
+                log.warning("Skipping Inaproc record mapping error: %s", e)
+
+        if mapped_inaproc:
+            log.info("Inserting %d Inaproc records...", len(mapped_inaproc))
+            with TargetAPIClient(config) as client:
+                payload = build_payload(mapped_inaproc)
+                client.post_batch(config.target_api_dataset_uid_inaproc, payload)
+            log.info("Inaproc insertion complete.")
+    except Exception as e:
+        log.error("Inaproc pipeline failed: %s", e)
+    # === WORLD BANK (COMMENTED OUT FOR TESTING) ===
+    # try:
+    #     log.info("Starting World Bank extraction...")
+    #     raw_worldbank = worldbank.fetch_all(config)
+    #     mapped_worldbank = []
+    #     for raw in raw_worldbank:
+    #         try:
+    #             mapped_worldbank.append(map_worldbank(raw))
+    #         except Exception as e:
+    #             log.warning("Skipping World Bank record mapping error: %s", e)
+    # 
+    #     if mapped_worldbank:
+    #         log.info("Inserting %d World Bank records...", len(mapped_worldbank))
+    #         with TargetAPIClient(config) as client:
+    #             payload = build_payload(mapped_worldbank)
+    #             client.post_batch(config.target_api_dataset_uid_worldbank, payload)
+    #         log.info("World Bank insertion complete.")
+    # except Exception as e:
+    #     log.error("World Bank pipeline failed: %s", e)
+    log.info("Pipeline complete.")
 
 
 if __name__ == "__main__":
-    app()
+    main()

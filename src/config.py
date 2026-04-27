@@ -29,18 +29,14 @@ class AppConfig:
     target_api_insert_path: str
     target_api_timeout_seconds: int
 
+    # Source: Inaproc
     inaproc_graphql_url: str
     inaproc_timeout_seconds: int
 
+    # Source: World Bank
     worldbank_api_url: str
     worldbank_api_key: str
     worldbank_timeout_seconds: int
-
-    batch_size: int
-    max_retries: int
-    retry_delay_seconds: float
-    output_dir: str
-    log_level: str
 
 
 def load_config() -> AppConfig:
@@ -64,11 +60,6 @@ def load_config() -> AppConfig:
             "WORLDBANK_API_URL",
             "https://apigwext.worldbank.org/dvsvc/v1.0/json/APPLICATION/ADOBE_EXPRNCE_MGR/FIRM/SANCTIONED_FIRM",
         ),
-        worldbank_api_key=_optional("WORLDBANK_API_KEY", "z9duUaFUiE" + "UYSHs97CU3" + "8fcZO7ipOPvm"),
+        worldbank_api_key=_require("WORLDBANK_API_KEY"),
         worldbank_timeout_seconds=int(_optional("WORLDBANK_TIMEOUT_SECONDS", "30")),
-        batch_size=int(_optional("BATCH_SIZE", "200")),
-        max_retries=int(_optional("MAX_RETRIES", "3")),
-        retry_delay_seconds=float(_optional("RETRY_DELAY_SECONDS", "2")),
-        output_dir=_optional("OUTPUT_DIR", "outputs"),
-        log_level=_optional("LOG_LEVEL", "INFO"),
     )
