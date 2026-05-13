@@ -15,6 +15,15 @@ from src.target.target_api_client import TargetAPIClient
 log = get_logger(__name__)
 
 
+def _dedupe_inaproc_keep_latest(
+    records: list[InaprocBlacklistRegistry],
+) -> list[InaprocBlacklistRegistry]:
+    by_id: dict[str, InaprocBlacklistRegistry] = {}
+    for record in records:
+        by_id[record.id] = record
+    return list(by_id.values())
+
+
 def main() -> None:
     try:
         config = load_config()
@@ -32,6 +41,18 @@ def main() -> None:
                 mapped_inaproc.append(mapped)
             except Exception as e:
                 log.warning("Skipping Inaproc record mapping error: %s", e)   
+
+        if mapped_inaproc:
+            before_count = len(mapped_inaproc)
+            mapped_inaproc = _dedupe_inaproc_keep_latest(mapped_inaproc)
+            after_count = len(mapped_inaproc)
+            removed_duplicates = before_count - after_count
+            log.info(
+                "Inaproc dedupe by id (keep-latest): before=%d after=%d removed_duplicates=%d",
+                before_count,
+                after_count,
+                removed_duplicates,
+            )
 
         if mapped_inaproc:
             log.info("Inserting %d Inaproc records...", len(mapped_inaproc))
