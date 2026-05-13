@@ -15,7 +15,7 @@ from src.report import dead_letter as dl
 from src.report.run_report import RunReport
 from src.target.payload_builder import build_payload, parse_response
 from src.target.target_api_client import TargetAPIClient
-from src.types import CanonicalRecord
+from src.models import CanonicalRecord
 
 log = get_logger(__name__)
 

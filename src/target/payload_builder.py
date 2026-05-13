@@ -16,11 +16,15 @@ Finalised payload contract:
   - 4xx (excl. 429) = non-retryable, raises TargetAPIError
   - 429 / 5xx       = retryable via tenacity
 """
-from src.types import CanonicalRecord
+from typing import Any
+
+from pydantic import BaseModel
+from src.models import CanonicalRecord
 
 
-def build_payload(records: list[CanonicalRecord]) -> dict:
-    return {"rows": [r.model_dump() for r in records]}
+
+def build_payload(records: list[BaseModel]) -> dict:
+    return {"rows": [r.model_dump(mode="json") for r in records]}
 
 
 def parse_response(response_body: dict) -> tuple[int, list[dict]]:

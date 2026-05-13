@@ -7,7 +7,7 @@ Date fields are normalised to ISO 8601 YYYY-MM-DD.
 Raises MapperError on any required field absence or unparseable date.
 """
 from src.errors import MapperError
-from src.types import CanonicalRecord
+from src.models import CanonicalRecord, WorldBankDebarment
 from src.utils import parse_date_iso
 
 _SOURCE_URL = "https://apigwext.worldbank.org"
@@ -44,4 +44,22 @@ def map_worldbank(raw: dict) -> CanonicalRecord:
         end_date=end_date,
         reference_id=None,
         raw_payload=dict(raw),
+    )
+
+def map_worldbank_debarment(raw: dict) -> WorldBankDebarment:
+    return WorldBankDebarment(
+        supp_id=raw.get("SUPP_ID"),
+        supp_name=raw.get("SUPP_NAME"),
+        supp_type_code=raw.get("SUPP_TYPE_CODE"),
+        land1=raw.get("LAND1"),
+        country_name=raw.get("COUNTRY_NAME"),
+        supp_city=raw.get("SUPP_CITY"),
+        supp_addr=raw.get("SUPP_ADDR"),
+        debar_from_date=raw.get("DEBAR_FROM_DATE"),
+        debar_to_date=raw.get("DEBAR_TO_DATE"),
+        debar_reason=raw.get("DEBAR_REASON"),
+        supp_elig_stat=raw.get("SUPP_ELIG_STAT"),
+        ineligibly_status=raw.get("INELIGIBLY_STATUS"),
+        add_supp_info=raw.get("ADD_SUPP_INFO"),
+        last_refresh_date=raw.get("LAST_REFRESH_DATE")
     )

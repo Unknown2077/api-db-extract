@@ -86,7 +86,7 @@ def fetch_all(config: AppConfig) -> list[dict]:
     """Fetch all blacklist records from Inaproc GraphQL API."""
     all_records: list[dict] = []
     page_number = 1
-    per_page = 200
+    per_page = 1000
 
     with httpx.Client(timeout=config.inaproc_timeout_seconds) as client:
         while True:
